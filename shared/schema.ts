@@ -45,6 +45,10 @@ export const goals = pgTable("goals", {
   currentAmount: numeric("current_amount", { precision: 10, scale: 2 }).notNull(),
   targetDate: timestamp("target_date").notNull(),
   monthlyIncome: numeric("monthly_income", { precision: 10, scale: 2 }).notNull(),
+  reminderEnabled: boolean("reminder_enabled").default(false),
+  reminderDate: timestamp("reminder_date"),
+  reminderEmail: text("reminder_email"),
+  reminderMessage: text("reminder_message"),
 });
 
 export const insertGoalSchema = createInsertSchema(goals).pick({
@@ -54,6 +58,10 @@ export const insertGoalSchema = createInsertSchema(goals).pick({
   currentAmount: true,
   targetDate: true,
   monthlyIncome: true,
+  reminderEnabled: true,
+  reminderDate: true,
+  reminderEmail: true,
+  reminderMessage: true,
 });
 
 // Wallet table

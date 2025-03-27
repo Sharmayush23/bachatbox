@@ -7,7 +7,8 @@ import {
   createGoal, 
   fetchGoals, 
   updateGoal, 
-  deleteGoal 
+  deleteGoal,
+  updateGoalReminder
 } from '../services/goalService';
 
 // Dialog for updating goal progress
@@ -86,7 +87,7 @@ const GoalsPage = () => {
 
         const updatedGoal = await updateGoal(selectedGoal.id, {
           ...selectedGoal,
-          currentAmount: amount
+          currentAmount: amount.toString()
         });
 
         setGoals(goals.map(g => g.id === updatedGoal.id ? updatedGoal : g));
@@ -122,6 +123,28 @@ const GoalsPage = () => {
       });
     }
   };
+  
+  const handleSetReminder = async (goalId: number, reminderData: any) => {
+    try {
+      const goal = goals.find(g => g.id === goalId);
+      if (!goal) return;
+      
+      const updatedGoal = await updateGoalReminder(goalId, {
+        reminderEnabled: reminderData.enabled,
+        reminderDate: reminderData.reminderDate,
+        reminderEmail: reminderData.reminderEmail,
+        reminderMessage: reminderData.reminderMessage,
+      });
+      
+      setGoals(goals.map(g => g.id === updatedGoal.id ? updatedGoal : g));
+    } catch (error) {
+      toast({
+        title: "Error Setting Reminder",
+        description: "There was a problem setting the reminder for this goal",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <section id="goals" className="pt-8">
@@ -147,6 +170,7 @@ const GoalsPage = () => {
                     goal={goal} 
                     onUpdate={handleUpdateGoal}
                     onDelete={handleDeleteGoal}
+                    onSetReminder={handleSetReminder}
                   />
                 ))
               ) : (

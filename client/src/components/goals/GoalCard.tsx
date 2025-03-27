@@ -1,11 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Goal } from '@shared/schema';
+import GoalReminder from './GoalReminder';
 
 type GoalCardProps = {
   goal: Goal;
   onUpdate: (id: number) => void;
   onDelete: (id: number) => void;
+  onSetReminder?: (goalId: number, reminderData: any) => void;
 };
 
 type SavingsPlan = {
@@ -15,7 +17,7 @@ type SavingsPlan = {
   suggestedCuts: string[];
 };
 
-const GoalCard = ({ goal, onUpdate, onDelete }: GoalCardProps) => {
+const GoalCard = ({ goal, onUpdate, onDelete, onSetReminder }: GoalCardProps) => {
   const calculateSavingsPlan = (goal: Goal): SavingsPlan => {
     const targetAmount = Number(goal.targetAmount);
     const monthlyIncome = Number(goal.monthlyIncome);
@@ -107,6 +109,15 @@ const GoalCard = ({ goal, onUpdate, onDelete }: GoalCardProps) => {
         </ul>
       </div>
       
+      <div className="flex items-center gap-2 mb-3">
+        {onSetReminder && <GoalReminder goal={goal} onSetReminder={onSetReminder} />}
+        <div className="text-xs text-muted-foreground">
+          {goal.reminderEnabled ? 
+            <span className="flex items-center"><i className="fas fa-bell text-amber-500 mr-1"></i> Reminder set</span> : 
+            <span className="flex items-center"><i className="fas fa-bell-slash text-muted-foreground mr-1"></i> No reminder</span>}
+        </div>
+      </div>
+
       <div className="flex space-x-2">
         <Button 
           variant="outline"

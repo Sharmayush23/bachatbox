@@ -29,6 +29,7 @@ import {
   processCSVTransactions
 } from '../services/transactionService';
 import TransactionTable from '../components/transactions/TransactionTable';
+import TransactionCharts from '../components/transactions/TransactionCharts';
 import { parseFileData } from '../services/csvService';
 
 const TransactionsPage = () => {
@@ -193,6 +194,13 @@ const TransactionsPage = () => {
   return (
     <section id="transactions" className="pt-8">
       <h2 className="text-2xl font-bold mb-6">Transactions</h2>
+      
+      {/* Transaction Charts */}
+      {transactions.length > 0 && (
+        <div className="mb-8">
+          <TransactionCharts transactions={transactions} />
+        </div>
+      )}
       
       {/* Upload Section */}
       <Card className="bg-card border border-border p-6 mb-8">

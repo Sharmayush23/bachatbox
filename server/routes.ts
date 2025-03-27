@@ -427,6 +427,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Goal reminder route
+  app.patch("/api/goals/:id/reminder", async (req, res) => {
+    try {
+      const userId = getUserIdFromRequest(req);
+      const goalId = parseInt(req.params.id);
+      
+      const existingGoal = await storage.getGoal(goalId);
+      
+      if (!existingGoal || existingGoal.userId !== userId) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+      
+      const { reminderEnabled, reminderDate, reminderEmail, reminderMessage } = req.body;
+      
+      const updatedGoal = await storage.updateGoal(goalId, {
+        reminderEnabled,
+        reminderDate: reminderDate ? new Date(reminderDate) : null,
+        reminderEmail,
+        reminderMessage
+      });
+      
+      res.json(updatedGoal);
+    } catch (error) {
+      res.status(500).json({ message: "An error occurred" });
+    }
+  });
+
   // Savings recommendations route
   app.post("/api/savings-recommendations", async (req, res) => {
     try {

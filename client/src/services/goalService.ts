@@ -7,19 +7,27 @@ let mockGoals: Goal[] = [
     id: 1,
     userId: 1,
     name: 'New Laptop',
-    targetAmount: 75000,
-    currentAmount: 25000,
-    targetDate: new Date('2024-09-15').toISOString(),
-    monthlyIncome: 42500,
+    targetAmount: '75000',
+    currentAmount: '25000',
+    targetDate: new Date('2024-09-15'),
+    monthlyIncome: '42500',
+    reminderEnabled: false,
+    reminderDate: null,
+    reminderEmail: null,
+    reminderMessage: null
   },
   {
     id: 2,
     userId: 1,
     name: 'Vacation Fund',
-    targetAmount: 100000,
-    currentAmount: 40000,
-    targetDate: new Date('2024-12-20').toISOString(),
-    monthlyIncome: 42500,
+    targetAmount: '100000',
+    currentAmount: '40000',
+    targetDate: new Date('2024-12-20'),
+    monthlyIncome: '42500',
+    reminderEnabled: false,
+    reminderDate: null,
+    reminderEmail: null,
+    reminderMessage: null
   },
 ];
 
@@ -97,5 +105,36 @@ export const deleteGoal = async (id: number): Promise<void> => {
   } catch (error) {
     console.error('Error deleting goal:', error);
     throw new Error('Failed to delete goal');
+  }
+};
+
+// Function to update goal reminder settings
+export const updateGoalReminder = async (id: number, reminderData: {
+  reminderEnabled: boolean,
+  reminderDate?: Date,
+  reminderEmail?: string,
+  reminderMessage?: string
+}): Promise<Goal> => {
+  try {
+    // In a real app, this would hit the API
+    // const response = await apiRequest('PATCH', `/api/goals/${id}/reminder`, reminderData);
+    // const updatedGoal = await response.json();
+    
+    // For demo, update the mock goal with reminder settings
+    const index = mockGoals.findIndex(goal => goal.id === id);
+    if (index === -1) {
+      throw new Error('Goal not found');
+    }
+    
+    const updatedGoal: Goal = {
+      ...mockGoals[index],
+      ...reminderData,
+    };
+    
+    mockGoals[index] = updatedGoal;
+    return updatedGoal;
+  } catch (error) {
+    console.error('Error updating goal reminder:', error);
+    throw new Error('Failed to update goal reminder');
   }
 };
