@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="wallet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">ExpenseTracker</div>
+        <button id="theme-toggle" class="theme-toggle">
+            <i class="fas fa-moon"></i>
+        </button>
+        <button class="menu-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#analytics">Analytics</a></li>
+        </ul>
+    </nav>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Welcome to ExpenseTracker</h1>
+            <p>Take control of your finances with our easy-to-use expense management system</p>
+        </div>
+    </section>
+
+    <section id="dashboard" class="dashboard">
+        <h2>Financial Overview</h2>
+        <div class="summary-cards">
+            <div class="card">
+                <i class="fas fa-wallet"></i>
+                <h3>Total Income</h3>
+                <p id="totalIncome">$0.00</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-money-bill-wave"></i>
+                <h3>Total Expenses</h3>
+                <p id="totalExpenses">$0.00</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-piggy-bank"></i>
+                <h3>Balance</h3>
+                <p id="balance">$0.00</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="analytics" class="analytics">
+        <h2>Transaction Analytics</h2>
+        <div class="upload-container">
+            <div class="upload-box">
+                <i class="fas fa-file-upload"></i>
+                <h3>Upload Google Pay Statement</h3>
+                <p>Upload your CSV file to analyze transactions</p>
+                <input type="file" id="csvFileInput" accept=".csv" />
+                <button id="uploadBtn">Process Transactions</button>
+            </div>
+        </div>
+        
+        <div class="charts-container">
+            <div class="chart-box">
+                <h3>Monthly Expenditure</h3>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>Category Distribution</h3>
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add this after the analytics section and before the footer -->
+    <section id="goals" class="goals">
+        <h2>Financial Goals & Savings Plan</h2>
+        <div class="goals-container">
+            <div class="goal-form">
+                <h3>Set New Goal</h3>
+                <form id="goalForm">
+                    <input type="text" id="goalName" placeholder="Goal Name" required>
+                    <input type="number" id="goalAmount" placeholder="Target Amount (₹)" required>
+                    <input type="date" id="goalDate" required>
+                    <input type="number" id="monthlyIncome" placeholder="Monthly Income (₹)" required>
+                    <input type="number" id="currentSavings" placeholder="Current Savings (₹)" required>
+                    <button type="submit">Create Goal & Plan</button>
+                </form>
+            </div>
+            <div class="goals-list">
+                <h3>Your Goals & Progress</h3>
+                <div id="goalsList" class="goals-grid"></div>
+            </div>
+        </div>
+    </section>
+    <!-- Update the script section -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="script.js"></script>
+        <script>
+            // Inline animations code
+            document.addEventListener("DOMContentLoaded", () => {
+                // Card Hover Animation
+                const cards = document.querySelectorAll(".card");
+                cards.forEach(card => {
+                    card.addEventListener("mouseover", () => {
+                        card.style.transform = "translateY(-10px) scale(1.05)";
+                    });
+                    card.addEventListener("mouseleave", () => {
+                        card.style.transform = "translateY(0) scale(1)";
+                    });
+                });
+    
+                // Theme Toggle
+                const themeToggle = document.getElementById("theme-toggle");
+                if (themeToggle) {
+                    themeToggle.addEventListener("click", () => {
+                        document.body.classList.toggle("dark-theme");
+                    });
+                }
+            });
+        </script>
+        <script>
+            // Inline goals code
+            document.addEventListener('DOMContentLoaded', function() {
+                const goalForm = document.getElementById('goalForm');
+                const goalsList = document.getElementById('goalsList');
+                let goals = JSON.parse(localStorage.getItem('financialGoals')) || [];
+    
+                // ... rest of the goals code ...
+                // (Copy the content from goals.js here)
+            });
+        </script>
+        
+        </section>
+        
+        <!-- Digital Wallet Section -->
+        <section id="wallet" class="wallet-section">
+            <h2>Digital Wallet</h2>
+            <div class="wallet-container">
+                <div class="wallet-balance">
+                    <h3>Wallet Balance</h3>
+                    <p id="walletBalance">₹0.00</p>
+                    <button id="addMoneyBtn" class="primary-btn">Add Money</button>
+                </div>
+                
+                <div class="payment-form">
+                    <h3>Make Payment</h3>
+                    <form id="paymentForm">
+                        <input type="text" id="receiverUPI" placeholder="Enter UPI ID" required>
+                        <input type="number" id="paymentAmount" placeholder="Amount (₹)" required>
+                        <select id="paymentCategory" required>
+                            <option value="">Select Category</option>
+                            <option value="food">Food & Dining</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="education">Education</option>
+                            <option value="rent">Rent & Housing</option>
+                            <option value="investment">Investment</option>
+                            <option value="others">Others</option>
+                        </select>
+                        <button type="submit" class="primary-btn">Pay Now</button>
+                    </form>
+                </div>
+                <div class="recent-transactions">
+                    <h3>Recent Transactions</h3>
+                    <div id="transactionsList" class="transactions-list"></div>
+                </div>
+            </div>
+        </section>
+    
+        <!-- Add Money Modal -->
+        <div id="addMoneyModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h3>Add Money to Wallet</h3>
+                <form id="addMoneyForm">
+                    <input type="number" id="addAmount" placeholder="Enter Amount (₹)" required>
+                    <select id="paymentMethod" required>
+                        <option value="">Select Payment Method</option>
+                        <option value="debit">Debit Card</option>
+                        <option value="credit">Credit Card</option>
+                        <option value="netbanking">Net Banking</option>
+                    </select>
+                    <button type="submit" class="primary-btn">Add Money</button>
+                </form>
+            </div>
+        </div>
+    
+        <footer>
+            <p>&copy; 2024 ExpenseTracker. All rights reserved.</p>
+        </footer>
+        <script src="wallet.js"></script>
+</body>
+</html>
