@@ -4,13 +4,14 @@ import Chart from 'chart.js/auto';
 
 type ChartCardProps = {
   title: string;
-  type: 'monthly' | 'category';
+  type: 'monthly' | 'category' | 'line' | 'pie' | 'bar' | 'radar';
   data: any;
   options?: string[];
   onOptionChange?: (option: string) => void;
+  description?: string;
 };
 
-const ChartCard = ({ title, type, data, options = [], onOptionChange }: ChartCardProps) => {
+const ChartCard = ({ title, type, data, options = [], onOptionChange, description }: ChartCardProps) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
 
@@ -24,6 +25,45 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange }: ChartCar
 
     const ctx = chartRef.current.getContext('2d');
     if (!ctx) return;
+
+    // Common chart options
+    const commonOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top' as const,
+          labels: {
+            color: '#9CA3AF'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: 'rgba(42, 42, 42, 0.5)'
+          },
+          ticks: {
+            color: '#9CA3AF'
+          }
+        },
+        y: {
+          grid: {
+            color: 'rgba(42, 42, 42, 0.5)'
+          },
+          ticks: {
+            color: '#9CA3AF'
+          }
+        }
+      }
+    };
+
+    // Color palette for multiple datasets
+    const colorPalette = [
+      '#2DD4BF', '#0F766E', '#3B82F6', '#8B5CF6', 
+      '#EC4899', '#EF4444', '#F59E0B', '#10B981',
+      '#6366F1', '#D946EF', '#F97316', '#06B6D4'
+    ];
 
     if (type === 'monthly') {
       chartInstance.current = new Chart(ctx, {
@@ -45,36 +85,7 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange }: ChartCar
             }
           ]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                color: '#9CA3AF'
-              }
-            }
-          },
-          scales: {
-            x: {
-              grid: {
-                color: 'rgba(42, 42, 42, 0.5)'
-              },
-              ticks: {
-                color: '#9CA3AF'
-              }
-            },
-            y: {
-              grid: {
-                color: 'rgba(42, 42, 42, 0.5)'
-              },
-              ticks: {
-                color: '#9CA3AF'
-              }
-            }
-          }
-        }
+        options: commonOptions
       });
     } else if (type === 'category') {
       chartInstance.current = new Chart(ctx, {
@@ -83,10 +94,7 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange }: ChartCar
           labels: data.labels,
           datasets: [{
             data: data.values,
-            backgroundColor: [
-              '#2DD4BF', '#0F766E', '#3B82F6', 
-              '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B'
-            ],
+            backgroundColor: colorPalette.slice(0, data.labels.length),
             borderWidth: 0
           }]
         },
@@ -106,6 +114,115 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange }: ChartCar
           cutout: '70%'
         }
       });
+    } else if (type === 'line') {
+      chartInstance.current = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: data.datasets.map((dataset: any, index: number) => ({
+            label: dataset.label,
+            data: dataset.data,
+            borderColor: colorPalette[index % colorPalette.length],
+            backgroundColor: `${colorPalette[index % colorPalette.length]}33`,
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+          }))
+        },
+        options: {
+          ...commonOptions,
+          elements: {
+            point: {
+              radius: 3
+            }
+          }
+        }
+      });
+    } else if (type === 'pie') {
+      chartInstance.current = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            data: data.values,
+            backgroundColor: colorPalette.slice(0, data.labels.length),
+            borderWidth: 1,
+            borderColor: '#1E1E1E'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                color: '#9CA3AF',
+                boxWidth: 15,
+                padding: 10
+              }
+            }
+          }
+        }
+      });
+    } else if (type === 'bar') {
+      chartInstance.current = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels,
+          datasets: data.datasets.map((dataset: any, index: number) => ({
+            label: dataset.label,
+            data: dataset.data,
+            backgroundColor: colorPalette[index % colorPalette.length],
+            borderRadius: 4
+          }))
+        },
+        options: commonOptions
+      });
+    } else if (type === 'radar') {
+      chartInstance.current = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: data.labels,
+          datasets: data.datasets.map((dataset: any, index: number) => ({
+            label: dataset.label,
+            data: dataset.data,
+            backgroundColor: `${colorPalette[index % colorPalette.length]}33`,
+            borderColor: colorPalette[index % colorPalette.length],
+            borderWidth: 2,
+            pointBackgroundColor: colorPalette[index % colorPalette.length]
+          }))
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              pointLabels: {
+                color: '#9CA3AF'
+              },
+              grid: {
+                color: 'rgba(42, 42, 42, 0.5)'
+              },
+              angleLines: {
+                color: 'rgba(42, 42, 42, 0.7)'
+              },
+              ticks: {
+                color: '#9CA3AF',
+                backdropColor: 'transparent'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                color: '#9CA3AF'
+              }
+            }
+          }
+        }
+      });
     }
 
     return () => {
@@ -117,7 +234,7 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange }: ChartCar
 
   return (
     <Card className="bg-card border border-border p-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-2">
         <h3 className="font-medium text-foreground">{title}</h3>
         {options.length > 0 && (
           <div className="relative">
@@ -132,6 +249,11 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange }: ChartCar
           </div>
         )}
       </div>
+      
+      {description && (
+        <p className="text-sm text-muted-foreground mb-4">{description}</p>
+      )}
+      
       <div className="h-64">
         <canvas ref={chartRef}></canvas>
       </div>
