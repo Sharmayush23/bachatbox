@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Navbar from "./components/layout/Navbar";
+import ChatBot from "./components/chatbot/ChatBot";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -57,15 +58,19 @@ function MainAppContent() {
           <Route component={NotFound} />
         </Switch>
       </main>
+      
+      {/* Add ChatBot only for authenticated users */}
+      {isAuthenticated && <ChatBot />}
+      
       <footer className="bg-card border-t border-border mt-12 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">
               <i className="fas fa-wallet text-primary mr-2"></i>
-              <span className="text-primary font-medium">ExpenseTracker</span>
+              <span className="text-primary font-medium">BachatBox</span>
             </div>
             <div className="text-muted-foreground text-sm">
-              &copy; 2024 ExpenseTracker. All rights reserved.
+              &copy; 2024 BachatBox. All rights reserved.
             </div>
           </div>
         </div>

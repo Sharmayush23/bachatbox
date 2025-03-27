@@ -41,7 +41,7 @@ const LoginPage = () => {
       await login(data.email, data.password);
       toast({
         title: "Login successful",
-        description: "Welcome to ExpenseTracker!",
+        description: "Welcome to BachatBox!",
       });
       setLocation('/dashboard');
     } catch (error) {
@@ -59,8 +59,8 @@ const LoginPage = () => {
     <section id="login" className="min-h-screen flex items-center justify-center -mt-16">
       <Card className="bg-card rounded-xl shadow-lg p-8 w-full max-w-md border border-border">
         <div className="text-center mb-6">
-          <i className="fas fa-lock text-primary text-4xl mb-4"></i>
-          <h2 className="text-2xl font-bold text-foreground">Login</h2>
+          <i className="fas fa-wallet text-primary text-4xl mb-4"></i>
+          <h2 className="text-2xl font-bold text-foreground">Login to BachatBox</h2>
           <p className="text-muted-foreground mt-2">Welcome back! Please login to your account.</p>
         </div>
         

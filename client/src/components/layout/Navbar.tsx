@@ -18,7 +18,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <i className="fas fa-wallet mr-2 text-primary"></i>
-              <span className="text-lg font-semibold text-primary">ExpenseTracker</span>
+              <span className="text-lg font-semibold text-primary">BachatBox</span>
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
