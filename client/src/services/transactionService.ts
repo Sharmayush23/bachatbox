@@ -135,29 +135,97 @@ export const processCSVTransactions = async (file: File): Promise<Transaction[]>
     const csvData = await parseCSV(file);
     
     // Transform CSV data to transaction objects
-    const newTransactions: Transaction[] = csvData.map((row, index) => {
-      const amount = parseFloat(row.amount || '0');
-      const isIncome = row.type?.toLowerCase() === 'income' || amount > 0;
+    const newTransactions: Transaction[] = csvData.map((row: any, index) => {
+      // Check if this is a bank statement format with Credit/Debit columns
+      const hasCreditDebitColumns = 
+        (row['credit amount'] !== undefined || row['debit amount'] !== undefined) || 
+        (row.hasOwnProperty('credit amount') || row.hasOwnProperty('debit amount'));
+      
+      let amount = 0;
+      let transactionType = 'expense';
+      
+      if (hasCreditDebitColumns) {
+        // Process as bank statement format
+        const creditAmount = parseFloat(row['credit amount'] || '0');
+        const debitAmount = parseFloat(row['debit amount'] || '0');
+        
+        if (creditAmount > 0) {
+          amount = creditAmount;
+          transactionType = 'income';
+        } else {
+          amount = debitAmount;
+          transactionType = 'expense';
+        }
+      } else if (row.type?.toLowerCase() === 'credit') {
+        // If the transaction has a type field with "Credit"
+        amount = parseFloat(row.amount || '0');
+        transactionType = 'income';
+      } else {
+        // Standard amount field
+        amount = parseFloat(row.amount || '0');
+        transactionType = row.type?.toLowerCase() === 'income' || amount > 0 ? 'income' : 'expense';
+      }
+      
+      // Determine category - use the existing category if available or derive from type
+      let category = row.category;
+      if (!category && row.type && row.type !== 'Credit' && row.type !== 'Debit') {
+        category = row.type;
+      }
+      
+      // Handle various date formats
+      let transactionDate = new Date();
+      
+      if (row.date) {
+        try {
+          // Try to parse the date (handles various formats)
+          if (row.date.includes('/')) {
+            // Handle formats like MM/DD/YYYY, DD/MM/YYYY
+            const parts = row.date.split('/');
+            if (parts.length === 3) {
+              if (parts[2].length === 4) {
+                // MM/DD/YYYY or DD/MM/YYYY
+                // Assume DD/MM/YYYY for bank statement
+                transactionDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+              } else if (parts[2].length === 2) {
+                // DD/MM/YY format
+                transactionDate = new Date(`20${parts[2]}-${parts[1]}-${parts[0]}`);
+              }
+            }
+          } else {
+            // Standard ISO format
+            transactionDate = new Date(row.date);
+          }
+          
+          // If date is invalid, use current date
+          if (isNaN(transactionDate.getTime())) {
+            transactionDate = new Date();
+          }
+        } catch (e) {
+          console.warn("Could not parse date:", row.date);
+          transactionDate = new Date();
+        }
+      }
       
       return {
         id: mockTransactions.length + index + 1,
         userId: 1,
         amount: Math.abs(amount),
-        description: row.description || 'Imported transaction',
-        category: row.category || (isIncome ? 'Income' : 'Others'),
-        transactionType: isIncome ? 'income' : 'expense',
-        date: row.date ? new Date(row.date).toISOString() : new Date().toISOString(),
+        description: row.description || (row.day ? `Transaction on ${row.day}` : 'Imported transaction'),
+        category: category || (transactionType === 'income' ? 'Income' : 'Others'),
+        transactionType: transactionType,
+        date: transactionDate.toISOString(),
       };
     });
     
-    // In a real app, this would hit the API to bulk import
-    // const response = await apiRequest('POST', '/api/transactions/import', { transactions: newTransactions });
-    // const importedTransactions = await response.json();
+    // Filter out any transactions with zero amount and no category
+    const validTransactions = newTransactions.filter(t => 
+      t.amount > 0 || t.category !== 'None'
+    );
     
     // For demo, add to mock transactions
-    mockTransactions = [...newTransactions, ...mockTransactions];
+    mockTransactions = [...validTransactions, ...mockTransactions];
     
-    return newTransactions;
+    return validTransactions;
   } catch (error) {
     console.error('Error processing CSV transactions:', error);
     throw new Error('Failed to process CSV transactions');
