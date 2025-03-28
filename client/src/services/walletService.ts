@@ -157,115 +157,226 @@ export const getWalletTransactions = async (): Promise<WalletTransaction[]> => {
 // Function to import wallet transactions from payment providers
 export const importTransactions = async (file: File, provider: string): Promise<WalletTransaction[]> => {
   try {
-    // In a real app, this would hit the API
-    // const formData = new FormData();
-    // formData.append('file', file);
-    // formData.append('provider', provider);
-    // const response = await apiRequest('POST', '/api/wallet/import', formData);
-    // const importedTransactions = await response.json();
-    
-    // For demo, parse the file and return mock transactions
-    const fileReader = new FileReader();
-    
-    const fileContents = await new Promise<string>((resolve, reject) => {
-      fileReader.onload = (e) => {
-        const result = e.target?.result;
-        if (typeof result === 'string') {
-          resolve(result);
+    // Use a stream-based approach to handle the file in smaller chunks
+    // This optimized method processes chunks of data rather than loading the entire file at once
+    return new Promise<WalletTransaction[]>((resolve, reject) => {
+      const importedTransactions: WalletTransaction[] = [];
+      let headers: string[] = [];
+      let processedLines = 0;
+      let buffer = '';
+      
+      // Batch size for processing rows
+      const BATCH_SIZE = 100;
+      
+      // Create a temporary ID counter to avoid conflicts
+      const tempIdStart = 10000 + mockTransactions.length;
+      
+      // Create a FileReader that processes chunks of data
+      const reader = new FileReader();
+      const chunkSize = 1024 * 1024; // 1MB chunks
+      let offset = 0;
+      
+      // Process CSV row and convert to transaction object
+      const processRow = (rowStr: string, rowIndex: number): WalletTransaction | null => {
+        if (!rowStr.trim()) return null;
+        
+        const values = rowStr.split(',');
+        if (values.length !== headers.length) return null;
+        
+        const record: { [key: string]: string } = {};
+        
+        // Create object from CSV row
+        headers.forEach((header, index) => {
+          record[header.trim()] = values[index]?.trim() || '';
+        });
+        
+        // Extract data based on standard banking CSV format
+        // First, determine amount and transaction type based on provider format
+        let amount = '0';
+        let transactionType: 'credit' | 'debit' = 'debit';
+        let description = '';
+        let category = '';
+        let date = new Date();
+        
+        // Bank statement format
+        if (record['Debit Amount'] !== undefined && record['Credit Amount'] !== undefined) {
+          // This is a banking statement format
+          const debitAmount = parseFloat(record['Debit Amount'] || '0');
+          const creditAmount = parseFloat(record['Credit Amount'] || '0');
+          
+          if (creditAmount > 0) {
+            amount = String(creditAmount);
+            transactionType = 'credit';
+          } else {
+            amount = String(debitAmount);
+            transactionType = 'debit';
+          }
+          
+          description = record['Type'] ? `${record['Type']} transaction` : 'Bank transaction';
+          category = record['Category'] || '';
+          
+          // Parse date with format flexibility
+          if (record['Date']) {
+            try {
+              // Handle various date formats
+              const dateStr = record['Date'];
+              if (dateStr.includes('/')) {
+                const [d, m, y] = dateStr.split('/');
+                date = new Date(`${m}/${d}/${y.length === 2 ? '20' + y : y}`);
+              } else {
+                date = new Date(dateStr);
+              }
+            } catch (e) {
+              date = new Date();
+            }
+          }
         } else {
-          reject(new Error('Failed to read file'));
+          // Handle provider-specific formats
+          switch (provider) {
+            case 'google_pay':
+              amount = record.amount || '0';
+              transactionType = record.type?.toLowerCase() === 'credit' ? 'credit' : 'debit';
+              description = record.description || 'Google Pay Transaction';
+              category = record.category || '';
+              date = record.date ? new Date(record.date) : new Date();
+              break;
+              
+            case 'paytm':
+              amount = record.amount || '0';
+              transactionType = record.type?.toLowerCase() === 'credit' ? 'credit' : 'debit';
+              description = record.narration || 'Paytm Transaction';
+              category = record.category || '';
+              date = record.date ? new Date(record.date) : new Date();
+              break;
+              
+            case 'phonepe':
+              amount = record.amount || '0';
+              transactionType = record.transaction_type?.toLowerCase() === 'credit' ? 'credit' : 'debit';
+              description = record.description || 'PhonePe Transaction';
+              category = record.category || '';
+              date = record.transaction_date ? new Date(record.transaction_date) : new Date();
+              break;
+              
+            default:
+              // Generic fallback mapping
+              amount = record.amount || '0';
+              transactionType = (record.type || record.transaction_type || '')?.toLowerCase().includes('credit') 
+                ? 'credit' : 'debit';
+              description = record.description || `${provider} Transaction`;
+              category = record.category || '';
+              
+              // Try different date fields
+              const dateField = record.date || record.transaction_date || record.Date;
+              date = dateField ? new Date(dateField) : new Date();
+          }
+        }
+        
+        // Create the transaction object
+        return {
+          id: tempIdStart + rowIndex,
+          walletId: mockWallet.id,
+          amount: String(amount),
+          description,
+          transactionType,
+          category: mapProviderCategory(category, provider),
+          date
+        };
+      };
+      
+      // Process a batch of lines from the buffer
+      const processLines = () => {
+        const lines = buffer.split('\n');
+        
+        // Keep the last line in the buffer if it's not complete
+        if (lines.length > 1) {
+          buffer = lines.pop() || '';
+          
+          // Process the header row if we haven't already
+          if (headers.length === 0 && lines.length > 0) {
+            headers = lines.shift()?.split(',').map(h => h.trim()) || [];
+          }
+          
+          // Process each complete line in batches
+          for (let i = 0; i < lines.length; i++) {
+            const transaction = processRow(lines[i], processedLines);
+            if (transaction) {
+              importedTransactions.push(transaction);
+            }
+            processedLines++;
+            
+            // Process in batches to avoid blocking the UI
+            if (i % BATCH_SIZE === 0 && i > 0) {
+              setTimeout(() => processLines(), 0);
+              return;
+            }
+          }
         }
       };
-      fileReader.onerror = () => {
-        reject(fileReader.error);
+      
+      // Handle each chunk as it's read
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          // Append the new chunk to our buffer
+          buffer += e.target.result;
+          
+          // Process lines that we have so far
+          processLines();
+          
+          // Read the next chunk if we have more data
+          offset += chunkSize;
+          if (offset < file.size) {
+            readNextChunk();
+          } else {
+            // We've read the entire file, finalize the processing
+            finalizeImport();
+          }
+        }
       };
-      fileReader.readAsText(file);
+      
+      reader.onerror = () => {
+        reject(new Error('Error reading file'));
+      };
+      
+      // Read the file in chunks
+      const readNextChunk = () => {
+        const slice = file.slice(offset, offset + chunkSize);
+        reader.readAsText(slice);
+      };
+      
+      // Start reading the first chunk
+      readNextChunk();
+      
+      // Finalize the import process
+      const finalizeImport = () => {
+        // Process any remaining data in the buffer
+        if (buffer.trim()) {
+          const transaction = processRow(buffer, processedLines);
+          if (transaction) {
+            importedTransactions.push(transaction);
+          }
+        }
+        
+        // Update wallet balance
+        const totalCredit = importedTransactions
+          .filter(t => t.transactionType === 'credit')
+          .reduce((sum, t) => sum + Number(t.amount), 0);
+          
+        const totalDebit = importedTransactions
+          .filter(t => t.transactionType === 'debit')
+          .reduce((sum, t) => sum + Number(t.amount), 0);
+          
+        mockWallet = {
+          ...mockWallet,
+          balance: String(Number(mockWallet.balance) + totalCredit - totalDebit)
+        };
+        
+        // Update mock transactions
+        mockTransactions = [...importedTransactions, ...mockTransactions];
+        
+        // Resolve with the imported transactions
+        resolve(importedTransactions);
+      };
     });
-    
-    // Parse CSV data
-    const rows = fileContents.split('\n');
-    const headers = rows[0].split(',');
-    const importedTransactions: WalletTransaction[] = [];
-    
-    for (let i = 1; i < rows.length; i++) {
-      if (!rows[i].trim()) continue;
-      
-      const values = rows[i].split(',');
-      const record: { [key: string]: string } = {};
-      
-      // Create object from CSV row
-      headers.forEach((header, index) => {
-        record[header.trim()] = values[index]?.trim() || '';
-      });
-      
-      // Map provider-specific CSV fields to wallet transaction
-      let transaction: WalletTransaction;
-      
-      // Process the transaction based on provider
-      if (provider === 'google_pay') {
-        transaction = {
-          id: mockTransactions.length + i,
-          walletId: mockWallet.id,
-          amount: String(Number(record.amount || 0)),
-          description: `${record.description || 'Google Pay Transaction'}`,
-          transactionType: record.type?.toLowerCase() === 'credit' ? 'credit' : 'debit',
-          category: mapProviderCategory(record.category, provider),
-          date: new Date(record.date || new Date()),
-        };
-      } else if (provider === 'paytm') {
-        transaction = {
-          id: mockTransactions.length + i,
-          walletId: mockWallet.id,
-          amount: String(Number(record.amount || 0)),
-          description: `${record.narration || 'Paytm Transaction'}`,
-          transactionType: record.type?.toLowerCase() === 'credit' ? 'credit' : 'debit',
-          category: mapProviderCategory(record.category, provider),
-          date: new Date(record.date || new Date()),
-        };
-      } else if (provider === 'phonepe') {
-        transaction = {
-          id: mockTransactions.length + i,
-          walletId: mockWallet.id,
-          amount: String(Number(record.amount || 0)),
-          description: `${record.description || 'PhonePe Transaction'}`,
-          transactionType: record.transaction_type?.toLowerCase() === 'credit' ? 'credit' : 'debit',
-          category: mapProviderCategory(record.category, provider),
-          date: new Date(record.transaction_date || new Date()),
-        };
-      } else {
-        // Generic mapping
-        transaction = {
-          id: mockTransactions.length + i,
-          walletId: mockWallet.id,
-          amount: String(Number(record.amount || 0)),
-          description: record.description || `${provider} Transaction`,
-          transactionType: (record.type || record.transaction_type || '')?.toLowerCase().includes('credit') ? 'credit' : 'debit',
-          category: mapProviderCategory(record.category, provider),
-          date: new Date(record.date || record.transaction_date || new Date()),
-        };
-      }
-      
-      importedTransactions.push(transaction);
-    }
-    
-    // Update mock data
-    mockTransactions = [...importedTransactions, ...mockTransactions];
-    
-    // Update wallet balance
-    const totalCredit = importedTransactions
-      .filter(t => t.transactionType === 'credit')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-      
-    const totalDebit = importedTransactions
-      .filter(t => t.transactionType === 'debit')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-      
-    mockWallet = {
-      ...mockWallet,
-      balance: String(Number(mockWallet.balance) + totalCredit - totalDebit), // Convert to string for schema
-    };
-    
-    return importedTransactions;
   } catch (error) {
     console.error('Error importing transactions:', error);
     throw new Error('Failed to import transactions');
