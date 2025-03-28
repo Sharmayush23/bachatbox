@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Router } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,6 +15,7 @@ import WalletPage from "./pages/WalletPage";
 import NotFound from "@/pages/not-found";
 import { useLocation } from "wouter";
 import { useAuth } from "./context/AuthContext";
+import { getBasePath } from "./lib/github-pages-router";
 
 // This is a separate component to be used within the AuthProvider
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -93,9 +94,16 @@ function AppWithProviders() {
   );
 }
 
-// The main App component now just returns the fully wrapped tree
+// The main App component now just returns the fully wrapped tree with proper GitHub Pages routing
 function App() {
-  return <AppWithProviders />;
+  // Get the base path for GitHub Pages deployment
+  const basePath = getBasePath();
+  
+  return (
+    <Router base={basePath}>
+      <AppWithProviders />
+    </Router>
+  );
 }
 
 export default App;

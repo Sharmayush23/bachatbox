@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { getBasePath } from "./github-pages-router";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,7 +13,21 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Get the base path for GitHub Pages (if in production)
+  const basePath = getBasePath();
+  
+  // Determine if the URL is an API URL or an external URL
+  const isApiUrl = url.startsWith('/api');
+  const isAbsoluteUrl = url.startsWith('http://') || url.startsWith('https://');
+  
+  // Construct the full URL with base path if necessary
+  const fullUrl = isAbsoluteUrl 
+    ? url 
+    : (isApiUrl 
+        ? url  // API URLs should remain as-is since they'll be served by our own server
+        : `${basePath}${url}`);
+  
+  const res = await fetch(fullUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,7 +44,24 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    // Get the base path for GitHub Pages (if in production)
+    const basePath = getBasePath();
+    
+    // Get the URL from the query key
+    const url = queryKey[0] as string;
+    
+    // Determine if the URL is an API URL or an external URL
+    const isApiUrl = url.startsWith('/api');
+    const isAbsoluteUrl = url.startsWith('http://') || url.startsWith('https://');
+    
+    // Construct the full URL with base path if necessary
+    const fullUrl = isAbsoluteUrl 
+      ? url 
+      : (isApiUrl 
+          ? url  // API URLs should remain as-is since they'll be served by our own server
+          : `${basePath}${url}`);
+          
+    const res = await fetch(fullUrl, {
       credentials: "include",
     });
 
