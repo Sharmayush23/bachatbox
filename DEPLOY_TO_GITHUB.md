@@ -12,7 +12,7 @@ This guide will walk you through the process of deploying your BachatBox Persona
 
 1. **Clone your repository on your local machine** (if you haven't already):
    ```bash
-   git clone https://github.com/YOUR_USERNAME/bachatbox.git
+   git clone https://github.com/bachatbox/bachatbox.git
    cd bachatbox
    ```
 
