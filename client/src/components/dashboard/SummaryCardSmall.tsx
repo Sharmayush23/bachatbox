@@ -55,11 +55,9 @@ const SummaryCardSmall = ({
   
   // Format value if it's a number
   const formattedValue = typeof value === 'number' 
-    ? new Intl.NumberFormat('en-US', { 
-        style: 'currency', 
-        currency: 'USD',
+    ? `₹${value.toLocaleString('en-IN', { 
         maximumFractionDigits: 0 
-      }).format(value)
+      })}`
     : value;
   
   return (
