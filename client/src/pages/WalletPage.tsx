@@ -3,7 +3,7 @@ import WalletCard from '../components/wallet/WalletCard';
 import PaymentForm from '../components/wallet/PaymentForm';
 import AddMoneyModal from '../components/wallet/AddMoneyModal';
 import ImportTransactionsModal from '../components/wallet/ImportTransactionsModal';
-import Wallet3D from '../components/wallet/Wallet3D';
+import WalletVisual from '../components/wallet/WalletVisual';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -177,9 +177,9 @@ const WalletPage = () => {
         </div>
       </div>
       
-      {/* 3D Wallet Visualization */}
+      {/* Wallet Visualization */}
       <div className="mb-6">
-        <Wallet3D balance={wallet ? Number(wallet.balance) : 0} />
+        <WalletVisual balance={wallet ? Number(wallet.balance) : 0} />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
