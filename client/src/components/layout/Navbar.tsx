@@ -22,25 +22,21 @@ const Navbar = () => {
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
-            <Link href="/dashboard">
-              <a className={`px-3 py-2 text-sm font-medium ${isActiveLink("/dashboard") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
-                Dashboard
-              </a>
+            <Link href="/dashboard"
+                 className={`px-3 py-2 text-sm font-medium ${isActiveLink("/dashboard") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+              Dashboard
             </Link>
-            <Link href="/transactions">
-              <a className={`px-3 py-2 text-sm font-medium ${isActiveLink("/transactions") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
-                Transactions
-              </a>
+            <Link href="/transactions"
+                 className={`px-3 py-2 text-sm font-medium ${isActiveLink("/transactions") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+              Transactions
             </Link>
-            <Link href="/goals">
-              <a className={`px-3 py-2 text-sm font-medium ${isActiveLink("/goals") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
-                Goals
-              </a>
+            <Link href="/goals"
+                 className={`px-3 py-2 text-sm font-medium ${isActiveLink("/goals") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+              Goals
             </Link>
-            <Link href="/wallet">
-              <a className={`px-3 py-2 text-sm font-medium ${isActiveLink("/wallet") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
-                Wallet
-              </a>
+            <Link href="/wallet"
+                 className={`px-3 py-2 text-sm font-medium ${isActiveLink("/wallet") ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+              Wallet
             </Link>
           </div>
           <div className="flex items-center">
@@ -80,25 +76,21 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="sm:hidden bg-card border-b border-border">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            <Link href="/dashboard">
-              <a className={`block px-3 py-2 rounded-md text-base font-medium ${isActiveLink("/dashboard") ? "text-primary" : "text-foreground hover:text-primary"}`}>
-                Dashboard
-              </a>
+            <Link href="/dashboard" 
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${isActiveLink("/dashboard") ? "text-primary" : "text-foreground hover:text-primary"}`}>
+              Dashboard
             </Link>
-            <Link href="/transactions">
-              <a className={`block px-3 py-2 rounded-md text-base font-medium ${isActiveLink("/transactions") ? "text-primary" : "text-foreground hover:text-primary"}`}>
-                Transactions
-              </a>
+            <Link href="/transactions"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${isActiveLink("/transactions") ? "text-primary" : "text-foreground hover:text-primary"}`}>
+              Transactions
             </Link>
-            <Link href="/goals">
-              <a className={`block px-3 py-2 rounded-md text-base font-medium ${isActiveLink("/goals") ? "text-primary" : "text-foreground hover:text-primary"}`}>
-                Goals
-              </a>
+            <Link href="/goals"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${isActiveLink("/goals") ? "text-primary" : "text-foreground hover:text-primary"}`}>
+              Goals
             </Link>
-            <Link href="/wallet">
-              <a className={`block px-3 py-2 rounded-md text-base font-medium ${isActiveLink("/wallet") ? "text-primary" : "text-foreground hover:text-primary"}`}>
-                Wallet
-              </a>
+            <Link href="/wallet"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${isActiveLink("/wallet") ? "text-primary" : "text-foreground hover:text-primary"}`}>
+              Wallet
             </Link>
           </div>
         </div>
