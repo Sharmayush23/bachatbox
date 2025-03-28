@@ -154,6 +154,151 @@ export const getWalletTransactions = async (): Promise<WalletTransaction[]> => {
   }
 };
 
+// Function to import wallet transactions from payment providers
+export const importTransactions = async (file: File, provider: string): Promise<WalletTransaction[]> => {
+  try {
+    // In a real app, this would hit the API
+    // const formData = new FormData();
+    // formData.append('file', file);
+    // formData.append('provider', provider);
+    // const response = await apiRequest('POST', '/api/wallet/import', formData);
+    // const importedTransactions = await response.json();
+    
+    // For demo, parse the file and return mock transactions
+    const fileReader = new FileReader();
+    
+    const fileContents = await new Promise<string>((resolve, reject) => {
+      fileReader.onload = (e) => {
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          resolve(result);
+        } else {
+          reject(new Error('Failed to read file'));
+        }
+      };
+      fileReader.onerror = () => {
+        reject(fileReader.error);
+      };
+      fileReader.readAsText(file);
+    });
+    
+    // Parse CSV data
+    const rows = fileContents.split('\n');
+    const headers = rows[0].split(',');
+    const importedTransactions: WalletTransaction[] = [];
+    
+    for (let i = 1; i < rows.length; i++) {
+      if (!rows[i].trim()) continue;
+      
+      const values = rows[i].split(',');
+      const record: { [key: string]: string } = {};
+      
+      // Create object from CSV row
+      headers.forEach((header, index) => {
+        record[header.trim()] = values[index]?.trim() || '';
+      });
+      
+      // Map provider-specific CSV fields to wallet transaction
+      let transaction: WalletTransaction;
+      
+      if (provider === 'google_pay') {
+        transaction = {
+          id: mockTransactions.length + i,
+          walletId: mockWallet.id,
+          amount: Number(record.amount || 0),
+          description: `${record.description || 'Google Pay Transaction'}`,
+          transactionType: record.type?.toLowerCase() === 'credit' ? 'credit' : 'debit',
+          category: mapProviderCategory(record.category, provider),
+          date: new Date(record.date || new Date()).toISOString(),
+        };
+      } else if (provider === 'paytm') {
+        transaction = {
+          id: mockTransactions.length + i,
+          walletId: mockWallet.id,
+          amount: Number(record.amount || 0),
+          description: `${record.narration || 'Paytm Transaction'}`,
+          transactionType: record.type?.toLowerCase() === 'credit' ? 'credit' : 'debit',
+          category: mapProviderCategory(record.category, provider),
+          date: new Date(record.date || new Date()).toISOString(),
+        };
+      } else if (provider === 'phonepe') {
+        transaction = {
+          id: mockTransactions.length + i,
+          walletId: mockWallet.id,
+          amount: Number(record.amount || 0),
+          description: `${record.description || 'PhonePe Transaction'}`,
+          transactionType: record.transaction_type?.toLowerCase() === 'credit' ? 'credit' : 'debit',
+          category: mapProviderCategory(record.category, provider),
+          date: new Date(record.transaction_date || new Date()).toISOString(),
+        };
+      } else {
+        // Generic mapping
+        transaction = {
+          id: mockTransactions.length + i,
+          walletId: mockWallet.id,
+          amount: Number(record.amount || 0),
+          description: record.description || `${provider} Transaction`,
+          transactionType: (record.type || record.transaction_type || '')?.toLowerCase().includes('credit') ? 'credit' : 'debit',
+          category: mapProviderCategory(record.category, provider),
+          date: new Date(record.date || record.transaction_date || new Date()).toISOString(),
+        };
+      }
+      
+      importedTransactions.push(transaction);
+    }
+    
+    // Update mock data
+    mockTransactions = [...importedTransactions, ...mockTransactions];
+    
+    // Update wallet balance
+    const totalCredit = importedTransactions
+      .filter(t => t.transactionType === 'credit')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+      
+    const totalDebit = importedTransactions
+      .filter(t => t.transactionType === 'debit')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+      
+    mockWallet = {
+      ...mockWallet,
+      balance: Number(mockWallet.balance) + totalCredit - totalDebit,
+    };
+    
+    return importedTransactions;
+  } catch (error) {
+    console.error('Error importing transactions:', error);
+    throw new Error('Failed to import transactions');
+  }
+};
+
+// Map provider-specific categories to our internal categories
+const mapProviderCategory = (category: string, provider: string): string => {
+  if (!category) return 'others';
+  
+  const categoryLower = category.toLowerCase();
+  
+  if (categoryLower.includes('food') || categoryLower.includes('restaurant') || categoryLower.includes('dining')) {
+    return 'food';
+  } else if (categoryLower.includes('shop') || categoryLower.includes('retail') || categoryLower.includes('store')) {
+    return 'shopping';
+  } else if (categoryLower.includes('transport') || categoryLower.includes('travel') || categoryLower.includes('cab') || 
+             categoryLower.includes('taxi') || categoryLower.includes('ride')) {
+    return 'transportation';
+  } else if (categoryLower.includes('bill') || categoryLower.includes('util')) {
+    return 'utilities';
+  } else if (categoryLower.includes('entertainment') || categoryLower.includes('movie') || categoryLower.includes('game')) {
+    return 'entertainment';
+  } else if (categoryLower.includes('health') || categoryLower.includes('doctor') || categoryLower.includes('medical')) {
+    return 'healthcare';
+  } else if (categoryLower.includes('edu') || categoryLower.includes('school') || categoryLower.includes('college')) {
+    return 'education';
+  } else if (categoryLower.includes('rent') || categoryLower.includes('house') || categoryLower.includes('home')) {
+    return 'rent';
+  } else {
+    return 'others';
+  }
+};
+
 // Helper function to get category display name
 const getCategoryName = (category: string): string => {
   const categories: { [key: string]: string } = {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from "@/components/ui/card";
 import Chart from 'chart.js/auto';
 
@@ -14,7 +14,15 @@ type ChartCardProps = {
 const ChartCard = ({ title, type, data, options = [], onOptionChange, description }: ChartCardProps) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
+  // Keep a local copy of data to prevent charts from disappearing
+  const [chartData, setChartData] = useState(data);
 
+  // Update local data when prop changes
+  useEffect(() => {
+    setChartData(data);
+  }, [data]);
+
+  // Create/update chart when component mounts or data changes
   useEffect(() => {
     if (!chartRef.current) return;
 
@@ -69,17 +77,17 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange, descriptio
       chartInstance.current = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: data.labels,
+          labels: chartData.labels,
           datasets: [
             {
               label: 'Income',
-              data: data.income,
+              data: chartData.income,
               backgroundColor: '#10B981',
               borderRadius: 4
             },
             {
               label: 'Expenses',
-              data: data.expenses,
+              data: chartData.expenses,
               backgroundColor: '#EF4444',
               borderRadius: 4
             }
@@ -91,10 +99,10 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange, descriptio
       chartInstance.current = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: data.labels,
+          labels: chartData.labels,
           datasets: [{
-            data: data.values,
-            backgroundColor: colorPalette.slice(0, data.labels.length),
+            data: chartData.values,
+            backgroundColor: colorPalette.slice(0, chartData.labels.length),
             borderWidth: 0
           }]
         },
@@ -118,8 +126,8 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange, descriptio
       chartInstance.current = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: data.labels,
-          datasets: data.datasets.map((dataset: any, index: number) => ({
+          labels: chartData.labels,
+          datasets: chartData.datasets.map((dataset: any, index: number) => ({
             label: dataset.label,
             data: dataset.data,
             borderColor: colorPalette[index % colorPalette.length],
@@ -142,10 +150,10 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange, descriptio
       chartInstance.current = new Chart(ctx, {
         type: 'pie',
         data: {
-          labels: data.labels,
+          labels: chartData.labels,
           datasets: [{
-            data: data.values,
-            backgroundColor: colorPalette.slice(0, data.labels.length),
+            data: chartData.values,
+            backgroundColor: colorPalette.slice(0, chartData.labels.length),
             borderWidth: 1,
             borderColor: '#1E1E1E'
           }]
@@ -169,8 +177,8 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange, descriptio
       chartInstance.current = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: data.labels,
-          datasets: data.datasets.map((dataset: any, index: number) => ({
+          labels: chartData.labels,
+          datasets: chartData.datasets.map((dataset: any, index: number) => ({
             label: dataset.label,
             data: dataset.data,
             backgroundColor: colorPalette[index % colorPalette.length],
@@ -183,8 +191,8 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange, descriptio
       chartInstance.current = new Chart(ctx, {
         type: 'radar',
         data: {
-          labels: data.labels,
-          datasets: data.datasets.map((dataset: any, index: number) => ({
+          labels: chartData.labels,
+          datasets: chartData.datasets.map((dataset: any, index: number) => ({
             label: dataset.label,
             data: dataset.data,
             backgroundColor: `${colorPalette[index % colorPalette.length]}33`,
@@ -230,7 +238,7 @@ const ChartCard = ({ title, type, data, options = [], onOptionChange, descriptio
         chartInstance.current.destroy();
       }
     };
-  }, [type, data]);
+  }, [type, chartData]);
 
   return (
     <Card className="bg-card border border-border p-6">

@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, 
   AreaChart, Area, Cell, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer 
+  Tooltip, Legend, ResponsiveContainer, Sector 
 } from 'recharts';
 import type { Transaction } from '@shared/schema';
 
@@ -13,11 +13,54 @@ interface TransactionChartsProps {
   transactions: Transaction[];
 }
 
-// Colors for categories in charts
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1'];
+// Enhanced color palette for improved visual appeal
+const COLORS = [
+  '#3B82F6', // Blue
+  '#10B981', // Green
+  '#F59E0B', // Amber
+  '#EF4444', // Red
+  '#8B5CF6', // Purple
+  '#EC4899', // Pink
+  '#06B6D4', // Cyan
+  '#F97316'  // Orange
+];
 
 const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
   const [timeRange, setTimeRange] = useState('last6Months');
+  const [activeIndex, setActiveIndex] = useState(0);
+  
+  // Function for active sector in pie chart
+  const onPieEnter = (_: any, index: number) => {
+    setActiveIndex(index);
+  };
+  
+  // Active sector for pie chart
+  const renderActiveShape = (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+    
+    return (
+      <g>
+        <text x={cx} y={cy} dy={-20} textAnchor="middle" fill="#999">
+          {payload.name}
+        </text>
+        <text x={cx} y={cy} dy={10} textAnchor="middle" fill="#999" fontSize={20} fontWeight="bold">
+          {formatCurrency(value)}
+        </text>
+        <text x={cx} y={cy} dy={30} textAnchor="middle" fill="#999">
+          {`${(percent * 100).toFixed(2)}%`}
+        </text>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius + 5}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+        />
+      </g>
+    );
+  };
   
   // Process transaction data for charts
   
@@ -191,31 +234,45 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
                   data={monthlyTrendData}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Legend />
+                  <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                  <XAxis dataKey="name" tick={{ fill: '#888' }} />
+                  <YAxis tick={{ fill: '#888' }} />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(Number(value))}
+                    contentStyle={{ backgroundColor: '#1e1e1e', borderColor: '#333', borderRadius: '8px' }}
+                    itemStyle={{ color: '#eee' }}
+                    labelStyle={{ color: '#ccc' }}
+                  />
+                  <Legend 
+                    iconType="circle" 
+                    wrapperStyle={{ paddingTop: '10px' }}
+                  />
                   <Line 
                     type="monotone" 
                     dataKey="income" 
-                    stroke="#8884d8" 
+                    stroke={COLORS[0]} 
                     activeDot={{ r: 8 }} 
-                    strokeWidth={2}
+                    strokeWidth={3}
+                    name="Income"
+                    dot={{ strokeWidth: 2 }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="expense" 
-                    stroke="#ff7675" 
+                    stroke={COLORS[3]} 
                     activeDot={{ r: 8 }} 
-                    strokeWidth={2}
+                    strokeWidth={3}
+                    name="Expense"
+                    dot={{ strokeWidth: 2 }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="balance" 
-                    stroke="#00b894" 
+                    stroke={COLORS[1]} 
                     activeDot={{ r: 8 }} 
-                    strokeWidth={2}
+                    strokeWidth={3}
+                    name="Balance"
+                    dot={{ strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -229,21 +286,34 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
+                    activeIndex={activeIndex}
+                    activeShape={renderActiveShape}
                     data={categoryData}
                     cx="50%"
                     cy="50%"
-                    labelLine={true}
+                    innerRadius={60}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    onMouseEnter={onPieEnter}
                   >
                     {categoryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Legend />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(Number(value))}
+                    contentStyle={{ backgroundColor: '#1e1e1e', borderColor: '#333', borderRadius: '8px' }}
+                    itemStyle={{ color: '#eee' }}
+                    labelStyle={{ color: '#ccc' }}
+                  />
+                  <Legend 
+                    iconType="circle"
+                    layout="vertical"
+                    verticalAlign="middle" 
+                    align="right"
+                    wrapperStyle={{ paddingLeft: '20px' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -258,13 +328,33 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
                   data={incomeVsExpenseData}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Legend />
-                  <Bar dataKey="income" fill="#8884d8" name="Income" />
-                  <Bar dataKey="expense" fill="#ff7675" name="Expense" />
+                  <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                  <XAxis dataKey="name" tick={{ fill: '#888' }} />
+                  <YAxis tick={{ fill: '#888' }} />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(Number(value))}
+                    contentStyle={{ backgroundColor: '#1e1e1e', borderColor: '#333', borderRadius: '8px' }}
+                    itemStyle={{ color: '#eee' }}
+                    labelStyle={{ color: '#ccc' }}
+                  />
+                  <Legend 
+                    iconType="circle"
+                    wrapperStyle={{ paddingTop: '10px' }}
+                  />
+                  <Bar 
+                    dataKey="income" 
+                    name="Income" 
+                    fill={COLORS[0]} 
+                    radius={[4, 4, 0, 0]}
+                    barSize={30}
+                  />
+                  <Bar 
+                    dataKey="expense" 
+                    name="Expense" 
+                    fill={COLORS[3]} 
+                    radius={[4, 4, 0, 0]}
+                    barSize={30}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -279,25 +369,35 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
                   data={monthlyTrendData}
                   margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Legend />
+                  <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                  <XAxis dataKey="name" tick={{ fill: '#888' }} />
+                  <YAxis tick={{ fill: '#888' }} />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(Number(value))}
+                    contentStyle={{ backgroundColor: '#1e1e1e', borderColor: '#333', borderRadius: '8px' }}
+                    itemStyle={{ color: '#eee' }}
+                    labelStyle={{ color: '#ccc' }}
+                  />
+                  <Legend 
+                    iconType="circle"
+                    wrapperStyle={{ paddingTop: '10px' }}
+                  />
                   <Area 
                     type="monotone" 
                     dataKey="income" 
+                    name="Income"
                     stackId="1" 
-                    stroke="#8884d8" 
-                    fill="#8884d8" 
+                    stroke={COLORS[0]} 
+                    fill={COLORS[0]} 
                     fillOpacity={0.6}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="expense" 
+                    name="Expense"
                     stackId="2" 
-                    stroke="#ff7675" 
-                    fill="#ff7675" 
+                    stroke={COLORS[3]} 
+                    fill={COLORS[3]} 
                     fillOpacity={0.6}
                   />
                 </AreaChart>
