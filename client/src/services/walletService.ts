@@ -5,54 +5,54 @@ import { apiRequest } from '../lib/queryClient';
 let mockWallet: Wallet = {
   id: 1,
   userId: 1,
-  balance: 10760,
+  balance: "10760", // Store as string to match schema
 };
 
 let mockTransactions: WalletTransaction[] = [
   {
     id: 1,
     walletId: 1,
-    amount: 450,
+    amount: "450", // numeric in schema requires string
     description: 'Paid to friend@upi (Food)',
     transactionType: 'debit',
     category: 'food',
-    date: new Date('2024-06-14T19:30:00').toISOString(),
+    date: new Date('2024-06-14T19:30:00'),
   },
   {
     id: 2,
     walletId: 1,
-    amount: 5000,
+    amount: "5000", // numeric in schema requires string
     description: 'Added money to wallet',
     transactionType: 'credit',
     category: null,
-    date: new Date('2024-06-12T14:15:00').toISOString(),
+    date: new Date('2024-06-12T14:15:00'),
   },
   {
     id: 3,
     walletId: 1,
-    amount: 1250,
+    amount: "1250", // numeric in schema requires string
     description: 'Paid to store@upi (Shopping)',
     transactionType: 'debit',
     category: 'shopping',
-    date: new Date('2024-06-10T11:20:00').toISOString(),
+    date: new Date('2024-06-10T11:20:00'),
   },
   {
     id: 4,
     walletId: 1,
-    amount: 340,
+    amount: "340", // numeric in schema requires string
     description: 'Paid to cab@upi (Transport)',
     transactionType: 'debit',
     category: 'transportation',
-    date: new Date('2024-06-09T08:45:00').toISOString(),
+    date: new Date('2024-06-09T08:45:00'),
   },
   {
     id: 5,
     walletId: 1,
-    amount: 10000,
+    amount: "10000", // numeric in schema requires string
     description: 'Added money to wallet',
     transactionType: 'credit',
     category: null,
-    date: new Date('2024-06-05T17:30:00').toISOString(),
+    date: new Date('2024-06-05T17:30:00'),
   },
 ];
 
@@ -81,17 +81,17 @@ export const addMoney = async (amount: number, paymentMethod: string): Promise<W
     // For demo, update the mock wallet and add a transaction
     mockWallet = {
       ...mockWallet,
-      balance: Number(mockWallet.balance) + amount,
+      balance: String(Number(mockWallet.balance) + amount), // Convert to string for schema
     };
     
     const newTransaction: WalletTransaction = {
       id: mockTransactions.length + 1,
       walletId: mockWallet.id,
-      amount,
+      amount: String(amount), // Convert to string for schema
       description: 'Added money to wallet',
       transactionType: 'credit',
       category: null,
-      date: new Date().toISOString(),
+      date: new Date(), // Use Date object for schema
     };
     
     mockTransactions = [newTransaction, ...mockTransactions];
@@ -117,17 +117,17 @@ export const makePayment = async (receiverUPI: string, amount: number, category:
     
     mockWallet = {
       ...mockWallet,
-      balance: Number(mockWallet.balance) - amount,
+      balance: String(Number(mockWallet.balance) - amount), // Convert to string for schema
     };
     
     const newTransaction: WalletTransaction = {
       id: mockTransactions.length + 1,
       walletId: mockWallet.id,
-      amount,
+      amount: String(amount), // Convert to string for schema
       description: `Paid to ${receiverUPI} (${getCategoryName(category)})`,
       transactionType: 'debit',
       category,
-      date: new Date().toISOString(),
+      date: new Date(), // Use Date object for schema
     };
     
     mockTransactions = [newTransaction, ...mockTransactions];
@@ -201,46 +201,47 @@ export const importTransactions = async (file: File, provider: string): Promise<
       // Map provider-specific CSV fields to wallet transaction
       let transaction: WalletTransaction;
       
+      // Process the transaction based on provider
       if (provider === 'google_pay') {
         transaction = {
           id: mockTransactions.length + i,
           walletId: mockWallet.id,
-          amount: Number(record.amount || 0),
+          amount: String(Number(record.amount || 0)),
           description: `${record.description || 'Google Pay Transaction'}`,
           transactionType: record.type?.toLowerCase() === 'credit' ? 'credit' : 'debit',
           category: mapProviderCategory(record.category, provider),
-          date: new Date(record.date || new Date()).toISOString(),
+          date: new Date(record.date || new Date()),
         };
       } else if (provider === 'paytm') {
         transaction = {
           id: mockTransactions.length + i,
           walletId: mockWallet.id,
-          amount: Number(record.amount || 0),
+          amount: String(Number(record.amount || 0)),
           description: `${record.narration || 'Paytm Transaction'}`,
           transactionType: record.type?.toLowerCase() === 'credit' ? 'credit' : 'debit',
           category: mapProviderCategory(record.category, provider),
-          date: new Date(record.date || new Date()).toISOString(),
+          date: new Date(record.date || new Date()),
         };
       } else if (provider === 'phonepe') {
         transaction = {
           id: mockTransactions.length + i,
           walletId: mockWallet.id,
-          amount: Number(record.amount || 0),
+          amount: String(Number(record.amount || 0)),
           description: `${record.description || 'PhonePe Transaction'}`,
           transactionType: record.transaction_type?.toLowerCase() === 'credit' ? 'credit' : 'debit',
           category: mapProviderCategory(record.category, provider),
-          date: new Date(record.transaction_date || new Date()).toISOString(),
+          date: new Date(record.transaction_date || new Date()),
         };
       } else {
         // Generic mapping
         transaction = {
           id: mockTransactions.length + i,
           walletId: mockWallet.id,
-          amount: Number(record.amount || 0),
+          amount: String(Number(record.amount || 0)),
           description: record.description || `${provider} Transaction`,
           transactionType: (record.type || record.transaction_type || '')?.toLowerCase().includes('credit') ? 'credit' : 'debit',
           category: mapProviderCategory(record.category, provider),
-          date: new Date(record.date || record.transaction_date || new Date()).toISOString(),
+          date: new Date(record.date || record.transaction_date || new Date()),
         };
       }
       
@@ -261,7 +262,7 @@ export const importTransactions = async (file: File, provider: string): Promise<
       
     mockWallet = {
       ...mockWallet,
-      balance: Number(mockWallet.balance) + totalCredit - totalDebit,
+      balance: String(Number(mockWallet.balance) + totalCredit - totalDebit), // Convert to string for schema
     };
     
     return importedTransactions;
